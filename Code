@@ -4,7 +4,7 @@ local window = DrRayLibrary:Load("Rinns Hub", "Default")
 
 local tab = DrRayLibrary.newTab("Main Tab", "ImageIdHere")
 
-tab.newToggle("Loop Kill All", "Loops Kills every player", true, function(toggleState)
+tab.newToggle("Loop Kill All", "Loops Kills every player you might get kicked", true, function(toggleState)
     if toggleState then
         print("On")
         _G.loopKill = true
@@ -18,7 +18,7 @@ tab.newToggle("Loop Kill All", "Loops Kills every player", true, function(toggle
                 end
                 local args = {
                     [1] = player.Character,
-                    [2] = 50 -- any amount too ig
+                    [2] = 40 -- any amount too ig
                 }
                 game:GetService("ReplicatedStorage"):WaitForChild("EventsFolder"):WaitForChild("KillCount"):FireServer(unpack(args))
             end
@@ -27,7 +27,7 @@ tab.newToggle("Loop Kill All", "Loops Kills every player", true, function(toggle
             end
             Players.PlayerAdded:Connect(handlePlayer)
             
-            wait(3.5) -- Wait for 2.7 seconds before the next iteration
+            wait(3.6) -- Wait for 2.7 seconds before the next iteration
         end
     else
         print("Off")
