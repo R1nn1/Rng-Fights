@@ -27,7 +27,7 @@ tab.newToggle("Loop Kill All", "Loops Kills every player", true, function(toggle
             end
             Players.PlayerAdded:Connect(handlePlayer)
             
-            wait(2.7) -- Wait for 2.7 seconds before the next iteration
+            wait(3.0) -- Wait for 2.7 seconds before the next iteration
         end
     else
         print("Off")
