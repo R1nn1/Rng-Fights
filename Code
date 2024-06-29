@@ -27,7 +27,7 @@ tab.newToggle("Loop Kill All", "Loops Kills every player", true, function(toggle
             end
             Players.PlayerAdded:Connect(handlePlayer)
             
-            wait(3.0) -- Wait for 2.7 seconds before the next iteration
+            wait(3.5) -- Wait for 2.7 seconds before the next iteration
         end
     else
         print("Off")
@@ -35,7 +35,7 @@ tab.newToggle("Loop Kill All", "Loops Kills every player", true, function(toggle
     end
 end)
 
-tab.newButton("Damage every player", "Damages every player use this around every 3 seconds", function()
+tab.newButton("Damage every player", "Damages every player use this around every 3.5 seconds", function()
     -- Run the damage code once
     local Players = game:GetService("Players")
     local localplayer = Players.LocalPlayer
