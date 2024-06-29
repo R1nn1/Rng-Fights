@@ -313,3 +313,12 @@ tab.newButton("Get Cyborg", "Gives You Cyborg DON'T SPAM THIS", function()
     }
     game:GetService("ReplicatedStorage"):WaitForChild("EventsFolder"):WaitForChild("GenerateAttack"):FireServer(unpack(args))
 end)
+
+local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/BocusLuke/UI/main/STX/Module.Lua"))()
+local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/BocusLuke/UI/main/STX/Client.Lua"))()
+
+Notification:Notify(
+    {Title = "IMPORTANT", Description = "If any of the toggles are already green turn it off then turn it on for the feature to work black = off green = on"},
+    {OutlineColor = Color3.fromRGB(80, 80, 80),Time = 8, Type = "option"},
+    {Image = "http://www.roblox.com/asset/?id=6023426923", ImageColor = Color3.fromRGB(255, 84, 84), Callback = function(State) print(tostring(State)) end}
+)
