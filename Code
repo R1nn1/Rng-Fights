@@ -304,6 +304,9 @@ local LoopFlingAllPlayers = function()
     while LoopFling do
         FlingAllPlayers()
         task.wait(5) -- Adjust this delay as needed
+        if not LoopFling then
+            break
+        end
     end
 end
 
@@ -326,3 +329,5 @@ tab.newInput("Fling Player", "Flings A Specific Player", function(text)
         print("Player not found")
     end
 end)
+
+
