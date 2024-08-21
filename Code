@@ -1,333 +1,165 @@
+-- Script to rename an object in Workspace
+
+-- Define the path to the target object
+local gameFolder = workspace:FindFirstChild("Game")
+
+if gameFolder then
+    -- Look for the object with the specified name inside the Game folder
+    local targetObject = gameFolder:FindFirstChild("Welcome to RNG Fights! Prepare to be annihilated")
+    
+    if targetObject then
+        -- Rename the object
+        targetObject.Name = "Rinns Hub ComeBack???"
+        print("Object renamed successfully.")
+    else
+        print("Target object not found in the Game folder.")
+    end
+else
+    print("Game folder not found in Workspace.")
+end
+
+
 local DrRayLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/AZYsGithub/DrRay-UI-Library/main/DrRay.lua"))()
 
 local window = DrRayLibrary:Load("Rinns Hub", "Default")
 
 local tab = DrRayLibrary.newTab("Main Tab", "ImageIdHere")
 
-tab.newButton("Get 5x luck", "Gives you 5x luck", function()
-    print('Hello!')
-    
-    -- Define the arguments for the different FireServer calls
-    local args1 = {
-        [1] = 1.5
-    }
-    local args2 = {
-        [1] = 1
-    }
-    local args3 = {
-        [1] = 0.35
-    }
-    
-    -- Function to perform the sequence of FireServer calls with waits
-    local function executeSequence()
-        -- First FireServer call
-        game:GetService("ReplicatedStorage").EventsFolder.LuckIncrease:FireServer(unpack(args1))
-        wait(0.5)
-        
-        -- Second FireServer call
-        game:GetService("ReplicatedStorage").EventsFolder.LuckIncrease:FireServer(unpack(args1))
-        wait(0.5)
-        
-        -- Third FireServer call
-        game:GetService("ReplicatedStorage").EventsFolder.LuckIncrease:FireServer(unpack(args2))
-        wait(0.5)
-        
-        -- Fourth FireServer call repeated 5 times
-        for i = 1, 5 do
-            game:GetService("ReplicatedStorage").EventsFolder.LuckIncrease:FireServer(unpack(args3))
-            wait(0.5)
-        end
+local autoRollToggle
+local goToSafeSpot = false
+local fastRollCd = false
+local selectedOption = "None"
+local autoRollActive = false
+local targetPosition = Vector3.new(10.443120002746582, 39.459999084472656, -10.564023971557617)
+
+local function stopAutoRoll()
+    if autoRollToggle then
+        autoRollToggle:Disconnect()
+        autoRollToggle = nil
     end
     
-    -- Execute the sequence
-    executeSequence()
-end)
+    if not fastRollCd then
+        game:GetService("ReplicatedStorage").GameFolder.RollCooldown.Value = 8
+    end
 
--- Initial configuration for global variables
-getgenv().HitboxSize = 15
-getgenv().HitboxTransparency = 0.3
-
-local hitboxEnabled = false
-local hitboxSize = 15
-
--- Function to update hitboxes
-local function updateHitbox()
-    game:GetService('RunService').RenderStepped:Connect(function()
-        if hitboxEnabled then
-            for _, v in next, game:GetService('Players'):GetPlayers() do
-                if v.Name ~= game:GetService('Players').LocalPlayer.Name and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                    pcall(function()
-                        v.Character.HumanoidRootPart.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
-                        v.Character.HumanoidRootPart.Transparency = getgenv().HitboxTransparency
-                        v.Character.HumanoidRootPart.BrickColor = BrickColor.new("Really black")
-                        v.Character.HumanoidRootPart.Material = "Neon"
-                        v.Character.HumanoidRootPart.CanCollide = false
-                    end)
-                end
-            end
-        else
-            for _, v in next, game:GetService('Players'):GetPlayers() do
-                if v.Name ~= game:GetService('Players').LocalPlayer.Name and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                    pcall(function()
-                        v.Character.HumanoidRootPart.Size = Vector3.new(2, 2, 1)
-                        v.Character.HumanoidRootPart.Transparency = 1
-                        v.Character.HumanoidRootPart.BrickColor = BrickColor.new("Medium stone grey")
-                        v.Character.HumanoidRootPart.Material = "Plastic"
-                        v.Character.HumanoidRootPart.CanCollide = false
-                    end)
-                end
-            end
-        end
-    end)
+    autoRollActive = false
 end
 
--- Hitbox Toggle
-tab.newToggle("HitBoxes", "changes peoples hitbox", true, function(toggleState)
-    hitboxEnabled = toggleState
-    if toggleState then
-        updateHitbox()
-        print("Hitboxes On")
-    else
-        print("Hitboxes Off")
-    end
-end)
+local function startAutoRoll()
+    game:GetService("ReplicatedStorage").GameFolder.RollCooldown.Value = 0.5
 
--- Hitbox Slider
-tab.newSlider("Hitbox Slider", "Lets you change how big other players hitbox are", 1000, false, function(num)
-    hitboxSize = num
-    print("Hitbox size set to " .. num)
-end)
+    autoRollToggle = game:GetService("RunService").Stepped:Connect(function()
+        local args = {
+            [1] = game.Players.LocalPlayer.Name,
+            [2] = "Random"
+        }
 
-local Targets = {"All"} -- "All", "Target Name", "arian_was_here"
+        game:GetService("ReplicatedStorage").EventsFolder.GenerateAttack:FireServer(unpack(args))
 
-local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
+        -- Check the selected option in the dropdown
+        if selectedOption ~= "None" then
+            local player = game.Players.LocalPlayer
+            local inventory = player.Backpack:GetChildren()
 
-local AllBool = false
-local LoopFling = false
-
-local GetPlayer = function(Name)
-    Name = Name:lower()
-    if Name == "all" or Name == "others" then
-        AllBool = true
-        return
-    elseif Name == "random" then
-        local GetPlayers = Players:GetPlayers()
-        if table.find(GetPlayers, Player) then table.remove(GetPlayers, table.find(GetPlayers, Player)) end
-        return GetPlayers[math.random(#GetPlayers)]
-    elseif Name ~= "random" and Name ~= "all" and Name ~= "others" then
-        for _, x in next, Players:GetPlayers() do
-            if x ~= Player then
-                if x.Name:lower():match("^" .. Name) then
-                    return x
-                elseif x.DisplayName:lower():match("^" .. Name) then
-                    return x
-                end
-            end
-        end
-    else
-        return
-    end
-end
-
-local SkidFling = function(TargetPlayer)
-    local Character = Player.Character
-    local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
-    local RootPart = Humanoid and Humanoid.RootPart
-
-    local TCharacter = TargetPlayer.Character
-    local THumanoid
-    local TRootPart
-    local THead
-    local Accessory
-    local Handle
-
-    if TCharacter:FindFirstChildOfClass("Humanoid") then
-        THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
-    end
-    if THumanoid and THumanoid.RootPart then
-        TRootPart = THumanoid.RootPart
-    end
-    if TCharacter:FindFirstChild("Head") then
-        THead = TCharacter.Head
-    end
-    if TCharacter:FindFirstChildOfClass("Accessory") then
-        Accessory = TCharacter:FindFirstChildOfClass("Accessory")
-    end
-    if Accessory and Accessory:FindFirstChild("Handle") then
-        Handle = Accessory.Handle
-    end
-
-    if Character and Humanoid and RootPart then
-        if RootPart.Velocity.Magnitude < 50 then
-            getgenv().OldPos = RootPart.CFrame
-        end
-        if THumanoid and THumanoid.Sit and not AllBool then
-            return
-        end
-        if THead then
-            workspace.CurrentCamera.CameraSubject = THead
-        elseif not THead and Handle then
-            workspace.CurrentCamera.CameraSubject = Handle
-        elseif THumanoid and TRootPart then
-            workspace.CurrentCamera.CameraSubject = THumanoid
-        end
-        if not TCharacter:FindFirstChildWhichIsA("BasePart") then
-            return
-        end
-
-        local FPos = function(BasePart, Pos, Ang)
-            RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
-            Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
-            RootPart.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
-            RootPart.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
-        end
-
-        local SFBasePart = function(BasePart)
-            local TimeToWait = 2
-            local Time = tick()
-            local Angle = 0
-
-            repeat
-                if RootPart and THumanoid then
-                    if BasePart.Velocity.Magnitude < 50 then
-                        Angle = Angle + 100
-
-                        FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
-                        task.wait()
-
-                        FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
-                        task.wait()
-
-                        FPos(BasePart, CFrame.new(2.25, 1.5, -2.25) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
-                        task.wait()
-
-                        FPos(BasePart, CFrame.new(-2.25, -1.5, 2.25) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
-                        task.wait()
-
-                        FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
-                        task.wait()
-
-                        FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
-                        task.wait()
-                    else
-                        FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
-                        task.wait()
-
-                        FPos(BasePart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0))
-                        task.wait()
-
-                        FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
-                        task.wait()
-
-                        FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
-                        task.wait()
-
-                        FPos(BasePart, CFrame.new(0, -1.5, -TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(0, 0, 0))
-                        task.wait()
-
-                        FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
-                        task.wait()
-
-                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
-                        task.wait()
-
-                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
-                        task.wait()
-
-                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(-90), 0, 0))
-                        task.wait()
-
-                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
-                        task.wait()
-                    end
-                else
+            for _, item in pairs(inventory) do
+                if item.Name == selectedOption then
+                    stopAutoRoll()
                     break
                 end
-            until BasePart.Velocity.Magnitude > 500 or BasePart.Parent ~= TargetPlayer.Character or TargetPlayer.Parent ~= Players or not TargetPlayer.Character == TCharacter or THumanoid.Sit or Humanoid.Health <= 0 or tick() > Time + TimeToWait
-        end
-
-        workspace.FallenPartsDestroyHeight = 0 / 0
-
-        local BV = Instance.new("BodyVelocity")
-        BV.Name = "EpixVel"
-        BV.Parent = RootPart
-        BV.Velocity = Vector3.new(9e8, 9e8, 9e8)
-        BV.MaxForce = Vector3.new(1 / 0, 1 / 0, 1 / 0)
-
-        Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-
-        if TRootPart and THead then
-            if (TRootPart.CFrame.p - THead.CFrame.p).Magnitude > 5 then
-                SFBasePart(THead)
-            else
-                SFBasePart(TRootPart)
             end
-        elseif TRootPart and not THead then
-            SFBasePart(TRootPart)
-        elseif not TRootPart and THead then
-            SFBasePart(THead)
-        elseif not TRootPart and not THead and Accessory and Handle then
-            SFBasePart(Handle)
-        else
-            return
         end
 
-        BV:Destroy()
-        Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
-        workspace.CurrentCamera.CameraSubject = Humanoid
+        -- Check if "Go to safe spot" is on
+        if goToSafeSpot then
+            local player = game.Players.LocalPlayer
+            player.Character:BreakJoints()
+            task.wait(4)
 
-        repeat
-            RootPart.CFrame = getgenv().OldPos * CFrame.new(0, .5, 0)
-            Character:SetPrimaryPartCFrame(getgenv().OldPos * CFrame.new(0, .5, 0))
-            Humanoid:ChangeState("GettingUp")
-            table.foreach(Character:GetChildren(), function(_, x)
-                if x:IsA("BasePart") then
-                    x.Velocity, x.RotVelocity = Vector3.new(), Vector3.new()
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+            local tweenService = game:GetService("TweenService")
+            local tweenInfo = TweenInfo.new(5, Enum.EasingStyle.Linear)
+            local tween = tweenService:Create(humanoidRootPart, tweenInfo, {CFrame = CFrame.new(targetPosition)})
+            
+            tween:Play()
+        end
+    end)
+
+    autoRollActive = true
+end
+
+-- Constantly check the dropdown selection to determine if Auto Roll should start or stop
+local function monitorSelection()
+    while true do
+        task.wait(0.1)
+        
+        if selectedOption == "None" and not autoRollActive then
+            startAutoRoll()
+        elseif selectedOption ~= "None" and autoRollActive then
+            local player = game.Players.LocalPlayer
+            local inventory = player.Backpack:GetChildren()
+
+            local found = false
+            for _, item in pairs(inventory) do
+                if item.Name == selectedOption then
+                    found = true
+                    stopAutoRoll()
+                    break
                 end
-            end)
-            task.wait()
-        until (RootPart.Position - getgenv().OldPos.p).Magnitude < 25
-        workspace.FallenPartsDestroyHeight = getgenv().FPDH
-    else
-        return
-    end
-end
+            end
 
-local FlingAllPlayers = function()
-    for _, x in next, Players:GetPlayers() do
-        SkidFling(x)
-    end
-end
-
-local LoopFlingAllPlayers = function()
-    while LoopFling do
-        FlingAllPlayers()
-        task.wait(5) -- Adjust this delay as needed
-        if not LoopFling then
-            break
+            if not found and not autoRollActive then
+                startAutoRoll()
+            end
         end
     end
 end
 
-tab.newButton("Fling All", "Flings Everyone in the game only use this again after it's over", function()
-    FlingAllPlayers()
-end)
-
-tab.newToggle("Loop fling all", "Loops Fling all", true, function(toggleState)
-    LoopFling = toggleState
-    if LoopFling then
-        coroutine.wrap(LoopFlingAllPlayers)()
-    end
-end)
-
-tab.newInput("Fling Player", "Flings A Specific Player", function(text)
-    local targetPlayer = GetPlayer(text)
-    if targetPlayer then
-        SkidFling(targetPlayer)
+tab.newToggle("Auto Roll", "Auto Rolls For You Settings Below", true, function(toggleState)
+    if toggleState then
+        startAutoRoll()
     else
-        print("Player not found")
+        stopAutoRoll()
     end
 end)
 
+tab.newDropdown("Stop Auto Rolling When you get", "Stops auto rolling when you get the specific aura", {
+    "None",
+    "360-NoScope",
+    "D E A T H",
+    "Divinity",
+    "Cyborg",
+    "Eternal",
+    "Banishment",
+    "InfiniLaser",
+    "Laser",
+    "Orbital Strike",
+    "Party",
+    "UltraPunch",
+    "Time God",
+    "SuperCharged",
+    "Slap",
+    "Singularity",
+    "Shockwave",
+    "Rock",
+    "Rapid",
+    "Fire",
+    "Randomized",
+    "Punch",
+    "Rage"
+}, function(option)
+    selectedOption = option
+end)
 
+tab.newToggle("Fast Roll Cd", "Lets You Roll Faster", true, function(toggleState)
+    fastRollCd = toggleState
+    if toggleState then
+        game:GetService("ReplicatedStorage").GameFolder.RollCooldown.Value = 0.5
+    elseif not autoRollToggle then
+        game:GetService("ReplicatedStorage").GameFolder.RollCooldown.Value = 8
+    end
+end)
+
+-- Start monitoring the selection to manage Auto Roll
+task.spawn(monitorSelection)
